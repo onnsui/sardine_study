@@ -33,9 +33,9 @@
       <div class="main-left">
         <div class="article">
           <div class="article-wrapper">
-            <div class="article-name">事業立ち上げ</div>
+            <div class="article-name">{{info}}</div>
             <div class="article-title">人財紹介会社を紹介する際の資金集めで注意すべきこと</div>
-            <div class="article-contents">人財紹介会社を運営するためには・・・大変です色々</div>
+            <div class="article-contents">人財紹介会社を運営するためには・・・</div>
             <div class="article-date">
               <div class="date">2018/09/13</div>
               <div class="article-new">New</div>
@@ -148,18 +148,28 @@
       <div class="copyright">
         Copyright © SCOUTER, Inc. All Rights Reserved.
       </div>
-
     </footer>
   </div>
 </template>
 
 <script>
 import HelloWorld from './components/HelloWorld'
+import axios from 'axios'
 
 export default {
   name: 'App',
   components: {
     HelloWorld
+  },
+  mounted() {
+    axios
+      .get('https://sardine-system.com/media/wp-json/wp-api-menus/v2/menus/11')
+      .then(response => (this.info = response.data.items[0].title))
+  },
+  data() {
+    return {
+      info: null
+    }
   }
 }
 </script>
