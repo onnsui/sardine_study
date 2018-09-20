@@ -17,80 +17,30 @@
       <div class="header-list">
         <!-- ヘッダーのカテゴリリストはv-forで取得する（暫定的に記述) -->
         <ul>
-          <li>会社設立</li>
-          <li>事業立ち上げ</li>
-          <li>事業運営</li>
-          <li>事業戦略</li>
-          <li>求人獲得</li>
-          <li>集客</li>
-          <li>ノウハウ</li>
-          <li>インタビュー</li>
-          <li>導入事例</li>
+          <li v-for="category in categories" :key="category.id">
+            {{category.title}}
+          </li>
         </ul>
       </div>
     </header>
     <div class="main-contents">
       <div class="main-left">
-        <div class="article">
-          <div class="article-wrapper">
-            <div class="article-name">{{info}}</div>
-            <div class="article-title">人財紹介会社を紹介する際の資金集めで注意すべきこと</div>
-            <div class="article-contents">人財紹介会社を運営するためには・・・</div>
-            <div class="article-date">
-              <div class="date">2018/09/13</div>
-              <div class="article-new">New</div>
+        <div class="articles" v-if="articles">
+          <div class="article" v-for="article in articles" :key="article.id">
+            <div class="article-wrapper">
+              <div class="article-name">{{getCategoryName(article.categories[0] || null)}}</div>
+              <div class="article-title">{{article.title.rendered}}</div>
+              <div class="article-contents">{{article.seo.description}}</div>
+              <div class="article-date">
+                <time class="date">{{article.date | moment}}</time>
+                <!-- <div class="article-new" v-if="moment().diff(date, 'days') <= '5'">New</div> -->
+                <div class="article-new">{{getisNew(article.date)}}</div>
+              </div>
             </div>
+            <div class="article-image"><img :src="article._embedded['wp:featuredmedia'][0].source_url" alt="logo"></div>
           </div>
-          <div class="article-image"><img src="./assets/article.jpg" alt="logo"></div>
         </div>
-        <div class="article">
-          <div class="article-wrapper">
-            <div class="article-name">事業立ち上げ</div>
-            <div class="article-title">人財紹介会社を紹介する際の資金集めで注意すべきこと</div>
-            <div class="article-contents">人財紹介会社を運営するためには・・・大変です色々</div>
-            <div class="article-date">
-              <div class="date">2018/09/13</div>
-              <div class="article-new">New</div>
-            </div>
-          </div>
-          <div class="article-image"><img src="./assets/article.jpg" alt="logo"></div>
-        </div>
-        <div class="article">
-          <div class="article-wrapper">
-            <div class="article-name">事業立ち上げ</div>
-            <div class="article-title">人財紹介会社を紹介する際の資金集めで注意すべきこと</div>
-            <div class="article-contents">人財紹介会社を運営するためには・・・大変です色々</div>
-            <div class="article-date">
-              <div class="date">2018/09/13</div>
-              <div class="article-new">New</div>
-            </div>
-          </div>
-          <div class="article-image"><img src="./assets/article.jpg" alt="logo"></div>
-        </div>
-        <div class="article">
-          <div class="article-wrapper">
-            <div class="article-name">事業立ち上げ</div>
-            <div class="article-title">人財紹介会社を紹介する際の資金集めで注意すべきこと</div>
-            <div class="article-contents">人財紹介会社を運営するためには・・・大変です色々</div>
-            <div class="article-date">
-              <div class="date">2018/09/13</div>
-              <div class="article-new">New</div>
-            </div>
-          </div>
-          <div class="article-image"><img src="./assets/article.jpg" alt="logo"></div>
-        </div>
-        <div class="article">
-          <div class="article-wrapper">
-            <div class="article-name">事業立ち上げ</div>
-            <div class="article-title">人財紹介会社を紹介する際の資金集めで注意すべきこと</div>
-            <div class="article-contents">人財紹介会社を運営するためには・・・大変です色々</div>
-            <div class="article-date">
-              <div class="date">2018/09/13</div>
-              <div class="article-new">New</div>
-            </div>
-          </div>
-          <div class="article-image"><img src="./assets/article.jpg" alt="logo"></div>
-        </div>
+        <div v-else>Loading...</div>
         <div class="pagenation">
           <ul>
             <li>
@@ -130,10 +80,9 @@
           <div class='footer-category-title'>カテゴリ一覧</div>
           <!-- フッターのカテゴリリストはv-forで取得する（暫定的に記述) -->
           <ul>
-            <li>会社設立</li>
-            <li>事業立ち上げ</li>
-            <li>事業運営</li>
-            <li>事業戦略</li>
+            <li v-for="item in categories" v-bind:key="item.title">
+              {{item.title}}
+            </li>
           </ul>
         </div>
         <div class="footer-category">
@@ -155,20 +104,66 @@
 <script>
 import HelloWorld from './components/HelloWorld'
 import axios from 'axios'
+import moment from 'moment'
 
 export default {
   name: 'App',
-  components: {
-    HelloWorld
+  filters: {
+    moment: function(date) {
+      return moment(date).format('YYYY/MM/DD')
+    }
+  },
+  computed: {
+    getisNew(date) {
+      // if (!date) {
+      //   return false
+      // }
+      return moment().diff(date, 'days') <= '5'
+    }
+  },
+  data() {
+    return {
+      // 初期値 //
+      categories: null,
+      articles: null
+    }
   },
   mounted() {
     axios
       .get('https://sardine-system.com/media/wp-json/wp-api-menus/v2/menus/11')
-      .then(response => (this.info = response.data.items[0].title))
+      .then(response => (this.categories = response.data.items))
+    axios
+      .get('https://sardine-system.com/media/wp-json/wp/v2/posts?_embed')
+      .then(response => (this.articles = response.data))
   },
-  data() {
-    return {
-      info: null
+  created: function(date) {
+    return moment().diff(date, 'days') <= '5'
+  },
+
+  components: {
+    HelloWorld
+  },
+  methods: {
+    getCategoryName(categoryId) {
+      // categoryId及びthis.categoriesがなかったら空で返却する
+      if (!categoryId || !this.categories) {
+        return ''
+      }
+
+      const filteredCategory = this.categories.filter(category => {
+        return category.object_id === categoryId
+      })
+
+      return filteredCategory[0].title || ''
+    },
+    getDate(date) {
+      if (!date) {
+        return ''
+      }
+      const articleDate = function(date) {
+        return moment(date).format('YYYY/MM/DD')
+      }
+      return articleDate || ''
     }
   }
 }
