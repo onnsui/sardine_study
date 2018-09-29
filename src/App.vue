@@ -1,6 +1,7 @@
 <template>
   <div class="container">
-    <header>
+    <sardine-header></sardine-header>
+    <!-- <header>
       <div class="header-top">
         <div class="header-top-left">
           <a href="index.html"><img src="./assets/logo_magagine_blue.1622261.svg" alt="logo"></a>
@@ -15,14 +16,13 @@
         </div>
       </div>
       <div class="header-list">
-        <!-- ヘッダーのカテゴリリストはv-forで取得する（暫定的に記述) -->
         <ul>
           <li v-for="category in categories" :key="category.id">
             {{category.title}}
           </li>
         </ul>
       </div>
-    </header>
+    </header> -->
     <div class="main-contents">
       <div class="main-left">
         <div class="articles" v-if="articles">
@@ -34,7 +34,8 @@
               <div class="article-date">
                 <time class="date">{{article.date | moment}}</time>
                 <!-- <div class="article-new" v-if="moment().diff(date, 'days') <= '5'">New</div> -->
-                <div class="article-new">{{getisNew(article.date)}}</div>
+                <!-- <div class="article-new">{{getisNew(article.date)}}</div> -->
+                <div class="article-new" v-if="getisNew">New</div>
               </div>
             </div>
             <div class="article-image"><img :src="article._embedded['wp:featuredmedia'][0].source_url" alt="logo"></div>
@@ -74,6 +75,7 @@
         </div>
       </div>
     </div>
+    <sardine-footer></sardine-footer>
     <footer>
       <div class="footer-content">
         <div class="footer-category">
@@ -102,7 +104,8 @@
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld'
+import footer from './components/footer.vue'
+import header from './components/header.vue'
 import axios from 'axios'
 import moment from 'moment'
 
@@ -114,18 +117,22 @@ export default {
     }
   },
   computed: {
-    getisNew(date) {
-      // if (!date) {
-      //   return false
-      // }
-      return moment().diff(date, 'days') <= '5'
+    getisNew: {
+      get: function() {
+        return moment().diff(this.date, 'days') <= '5'
+      },
+      set: function(val) {
+        this.isNew = false
+      }
     }
   },
   data() {
     return {
       // 初期値 //
       categories: null,
-      articles: null
+      articles: null,
+      date: null,
+      isNew: false
     }
   },
   mounted() {
@@ -135,13 +142,16 @@ export default {
     axios
       .get('https://sardine-system.com/media/wp-json/wp/v2/posts?_embed')
       .then(response => (this.articles = response.data))
+    axios
+      .get('https://sardine-system.com/media/wp-json/wp/v2/posts?_embed')
+      .then(response => (this.date = response.data.date))
   },
   created: function(date) {
     return moment().diff(date, 'days') <= '5'
   },
-
   components: {
-    HelloWorld
+    'sardine-header': header,
+    'sardine-footer': footer
   },
   methods: {
     getCategoryName(categoryId) {
@@ -155,16 +165,16 @@ export default {
       })
 
       return filteredCategory[0].title || ''
-    },
-    getDate(date) {
-      if (!date) {
-        return ''
-      }
-      const articleDate = function(date) {
-        return moment(date).format('YYYY/MM/DD')
-      }
-      return articleDate || ''
     }
+    // getDate(date) {
+    //   if (!date) {
+    //     return ''
+    //   }
+    //   const articleDate = function(date) {
+    //     return moment(date).format('YYYY/MM/DD')
+    //   }
+    //   return articleDate || ''
+    // }
   }
 }
 </script>
